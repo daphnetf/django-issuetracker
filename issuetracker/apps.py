@@ -1,17 +1,17 @@
 from django.apps import AppConfig
 from django.db.models.signals import post_save
-from issuetracker.models import IssueAction, IssueState
 
 def issue_created(sender, **kwargs):
     if kwargs['created'] == True:
         instance = kwargs['instance']
-        ia = IssueAction.objects.create(
+        ia = sender.get_model('IssueAction').objects.create(
             issue=instance,
-            action=IssueState.NEW
+            user=reporter,
+            action=sender.get_model('IssueState').NEW
         )
         ia.save()
         if instance.assignee:
-            instance.assign(instance.assignee)
+            instance.assign(reporter, instance.assignee)
 
 
 class IssuetrackerAppConfig(AppConfig):
