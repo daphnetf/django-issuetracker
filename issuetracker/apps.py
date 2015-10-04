@@ -1,22 +1,24 @@
-from django.apps import AppConfig
+from django.apps import AppConfig, apps
 from django.db.models.signals import post_save
+from issuetracker.models import IssueState
 
 def issue_created(sender, **kwargs):
     if kwargs['created'] == True:
         instance = kwargs['instance']
-        ia = sender.get_model('IssueAction').objects.create(
-            issue=instance,
-            user=reporter,
-            action=sender.get_model('IssueState').NEW
+        ia = apps.get_model('issuetracker', 'IssueAction').objects.create(
+                issue=instance,
+                user=instance.reporter,
+                action=IssueState.NEW
         )
         ia.save()
         if instance.assignee:
-            instance.assign(reporter, instance.assignee)
+            instance.assign(instance.reporter, instance.assignee)
 
 
 class IssuetrackerAppConfig(AppConfig):
 
     name = 'issuetracker'
+    label = 'issuetracker'
     verbose_name = 'Issue Tracker'
     def ready(self):
         post_save.connect(issue_created, sender=self.get_model('Issue'))

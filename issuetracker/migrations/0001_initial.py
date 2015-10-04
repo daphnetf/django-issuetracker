@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-from django.conf import settings
 import django_fsm
+from django.conf import settings
 import django_markdown.models
 
 
@@ -17,57 +17,53 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Issue',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
                 ('title', models.CharField(max_length=256)),
-                ('state', django_fsm.FSMField(verbose_name='IssueState', default='new', max_length=50, choices=[('new', 'New'), ('unassinged', 'Unassigned'), ('assigned', 'Assigned'), ('closed', 'Closed')], protected=True)),
-                ('assignee', models.ForeignKey(to=settings.AUTH_USER_MODEL, blank=True, related_name='assignee', null=True)),
+                ('state', django_fsm.FSMField(max_length=50, default='new', verbose_name='IssueState', protected=True, choices=[('new', 'New'), ('unassinged', 'Unassigned'), ('assigned', 'Assigned'), ('closed', 'Closed')])),
+                ('assignee', models.ForeignKey(blank=True, null=True, to=settings.AUTH_USER_MODEL, related_name='assignee')),
                 ('reporter', models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name='repoter')),
             ],
         ),
         migrations.CreateModel(
             name='IssueAction',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
                 ('action', models.CharField(max_length=256)),
                 ('date', models.DateTimeField(auto_now_add=True)),
+                ('text', django_markdown.models.MarkdownField()),
+                ('issue', models.ForeignKey(to='issuetracker.Issue')),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
+            options={
+                'get_latest_by': 'date',
+            },
         ),
         migrations.CreateModel(
             name='IssueTag',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
                 ('issue', models.ForeignKey(to='issuetracker.Issue')),
             ],
         ),
         migrations.CreateModel(
             name='Tag',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
                 ('name', models.CharField(max_length=256)),
                 ('colour', models.CharField(max_length=6)),
             ],
-        ),
-        migrations.CreateModel(
-            name='Comment',
-            fields=[
-                ('issueaction_ptr', models.OneToOneField(primary_key=True, to='issuetracker.IssueAction', serialize=False, parent_link=True, auto_created=True)),
-                ('text', django_markdown.models.MarkdownField()),
-            ],
-            bases=('issuetracker.issueaction',),
         ),
         migrations.AddField(
             model_name='issuetag',
             name='tag',
             field=models.ForeignKey(to='issuetracker.Tag'),
         ),
-        migrations.AddField(
-            model_name='issueaction',
-            name='issue',
-            field=models.ForeignKey(to='issuetracker.Issue'),
+        migrations.AlterUniqueTogether(
+            name='issuetag',
+            unique_together=set([('issue', 'tag')]),
         ),
-        migrations.AddField(
-            model_name='issueaction',
-            name='user',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+        migrations.AlterOrderWithRespectTo(
+            name='issueaction',
+            order_with_respect_to='issue',
         ),
     ]

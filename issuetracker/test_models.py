@@ -1,13 +1,11 @@
 from django.contrib.auth.models import AnonymousUser, User
 from django.test import TestCase
 from issuetracker.models import Issue, IssueAction, IssueState
-from issuetracker.middleware import _user
 
 class IssueTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='user', email='email', password='pass')
-        _user.value = self.user
 
     def test_issue_creation_creates_action(self):
         self.assertEqual(0, len(IssueAction.objects.all()))

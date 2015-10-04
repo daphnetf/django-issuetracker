@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django_fsm import FSMField, transition
 from django_markdown.models import MarkdownField
+from django_markdown.utils import markdown as _markdown
 
 
 class Tag(models.Model):
@@ -79,8 +80,16 @@ class Issue(models.Model):
             action=IssueState.CLOSED
         ).save()
 
+    def __str__(self):
+        return self.title
+
 
 class IssueAction(models.Model):
+
+    class Meta:
+        get_latest_by = 'date'
+        order_with_respect_to = 'issue'
+
     issue = models.ForeignKey(
         'issuetracker.Issue'
     )
@@ -93,13 +102,19 @@ class IssueAction(models.Model):
     date = models.DateTimeField(
         auto_now_add=True
     )
-
-
-class Comment(IssueAction):
     text = MarkdownField()
+
+    def __str__(self):
+        if len(self.text):
+            return _markdown(self.text) + '<hr />' + self.action
+        return self.action
 
 
 class IssueTag(models.Model):
+
+    class Meta:
+        unique_together = (('issue', 'tag'),)
+
     issue = models.ForeignKey(
         'issuetracker.Issue'
     )
