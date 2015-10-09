@@ -2,9 +2,9 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+import django_markdown.models
 import django_fsm
 from django.conf import settings
-import django_markdown.models
 
 
 class Migration(migrations.Migration):
@@ -17,17 +17,18 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Issue',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
                 ('title', models.CharField(max_length=256)),
-                ('state', django_fsm.FSMField(max_length=50, default='new', verbose_name='IssueState', protected=True, choices=[('new', 'New'), ('unassinged', 'Unassigned'), ('assigned', 'Assigned'), ('closed', 'Closed')])),
-                ('assignee', models.ForeignKey(blank=True, null=True, to=settings.AUTH_USER_MODEL, related_name='assignee')),
+                ('text', django_markdown.models.MarkdownField()),
+                ('state', django_fsm.FSMField(choices=[('new', 'New'), ('unassinged', 'Unassigned'), ('assigned', 'Assigned'), ('closed', 'Closed')], protected=True, verbose_name='IssueState', default='new', max_length=50)),
+                ('assignee', models.ForeignKey(null=True, to=settings.AUTH_USER_MODEL, related_name='assignee', blank=True)),
                 ('reporter', models.ForeignKey(to=settings.AUTH_USER_MODEL, related_name='repoter')),
             ],
         ),
         migrations.CreateModel(
             name='IssueAction',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
                 ('action', models.CharField(max_length=256)),
                 ('date', models.DateTimeField(auto_now_add=True)),
                 ('text', django_markdown.models.MarkdownField()),
@@ -41,14 +42,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='IssueTag',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
                 ('issue', models.ForeignKey(to='issuetracker.Issue')),
             ],
         ),
         migrations.CreateModel(
             name='Tag',
             fields=[
-                ('id', models.AutoField(primary_key=True, verbose_name='ID', serialize=False, auto_created=True)),
+                ('id', models.AutoField(serialize=False, verbose_name='ID', auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=256)),
                 ('colour', models.CharField(max_length=6)),
             ],

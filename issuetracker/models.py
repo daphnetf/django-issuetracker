@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.urlresolvers import reverse_lazy
 from django.db import models
 from django_fsm import FSMField, transition
 from django_markdown.models import MarkdownField
@@ -44,12 +45,25 @@ class Issue(models.Model):
     title = models.CharField(
         max_length=256
     )
+    text = MarkdownField()
     state = FSMField(
         default=IssueState.NEW,
         verbose_name='IssueState',
         choices=IssueState.CHOICES,
         protected=True,
     )
+
+    def is_assigned(self):
+        return self.assignee != None
+
+    def is_not_assigned(self):
+        return not self.is_assigned()
+
+    def get_absolute_url(self):
+        return reverse_lazy('issuetracker:issue', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return self.title
 
     @transition(field=state, source=[IssueState.NEW, IssueState.UNASSIGNED],
     target=IssueState.ASSIGNED)
@@ -63,7 +77,7 @@ class Issue(models.Model):
 
     @transition(field=state, source=[IssueState.ASSIGNED],
     target=IssueState.UNASSIGNED)
-    def unassing(self, uesr):
+    def unassign(self, user):
         self.assignee = None
         IssueAction.objects.create(
             issue=self,
@@ -80,8 +94,25 @@ class Issue(models.Model):
             action=IssueState.CLOSED
         ).save()
 
-    def __str__(self):
-        return self.title
+    @transition(field=state, source=[IssueState.CLOSED],
+    target=IssueState.UNASSIGNED,
+    conditions=[is_not_assigned])
+    def reopen(self, user):
+        IssueAction.objects.create(
+            issue=self,
+            user=user,
+            action=IssueState.NEW
+        ).save()
+
+    @transition(field=state, source=[IssueState.CLOSED],
+    target=IssueState.ASSIGNED,
+    conditions=[is_assigned])
+    def reopen(self, user):
+        IssueAction.objects.create(
+            issue=self,
+            user=user,
+            action=IssueState.NEW
+        ).save()
 
 
 class IssueAction(models.Model):
@@ -105,8 +136,6 @@ class IssueAction(models.Model):
     text = MarkdownField()
 
     def __str__(self):
-        if len(self.text):
-            return _markdown(self.text) + '<hr />' + self.action
         return self.action
 
 
