@@ -1,0 +1,11 @@
+{% extends "issuetracker/base.html" %}
+{% load django_markdown %}
+
+{% block content %}
+<dl>
+<dt>Name</dt>
+<dd>{{ object.name }}</dd>
+<dt>Color</dt>
+<dd>#{{ object.color }}</dd>
+</dl>
+{% endblock %}

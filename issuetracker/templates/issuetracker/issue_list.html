@@ -1,7 +1,7 @@
 {% extends "issuetracker/base.html" %}
 
 {% block content %}
-    <h2>Issues</h2>
+    <h2><span class="glyphicon glyphicon-list-alt"></span> Issues</h2>
 {% if object_list %}
     <ul>
         {% for issue in object_list %}

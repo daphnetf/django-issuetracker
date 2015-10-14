@@ -1,0 +1,22 @@
+{% load django_markdown %}
+<div class="row">
+  <div class="col-sm-2">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        {{ action.user }}
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-10">
+    <div class="panel panel-{% if action.action == 'closed' %}success{% elif action.action == 'opened' %}danger{% elif action.action == 'assigned' %}info{% else %}default{% endif %}">
+      <div class="panel-heading">
+        <span class="glyphicon glyphicon-{% if action.action == 'commented' %}comment{% elif action.action == 'closed' %}ok{% elif action.action == 'assigned' %}user{% elif action.action == 'opened' %}plus{% else %}pencil{% endif %}"></span> {{ action }} &dash;  @ {{ action.date }}
+      </div>
+      {% if action.text %}
+      <div class="panel-body">
+        {{ action.text|markdown_safe }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

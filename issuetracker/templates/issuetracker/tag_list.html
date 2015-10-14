@@ -1,11 +1,11 @@
 {% extends "issuetracker/base.html" %}
 
 {% block content %}
-    <h2>Tags</h2>
+    <h2><span class="glyphicon glyphicon-tags"></span> Tags</h2>
 {% if object_list %}
     <ul>
         {% for tag in object_list %}
-        <li>{{ tag }}</li>
+        <li><a href="{{ tag.get_absolute_url }}"><span class="badge badge-default" style="background-color:#{{tag.color}}">{{ tag }}</span></a></li>
         {% endfor %}
     </ul>
 {% else %}

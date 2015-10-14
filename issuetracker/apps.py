@@ -1,6 +1,5 @@
 from django.apps import AppConfig, apps
 from django.db.models.signals import post_save
-from issuetracker.models import IssueState
 
 def issue_created(sender, **kwargs):
     if kwargs['created'] == True:
@@ -8,7 +7,7 @@ def issue_created(sender, **kwargs):
         ia = apps.get_model('issuetracker', 'IssueAction').objects.create(
                 issue=instance,
                 user=instance.reporter,
-                action=IssueState.NEW
+                action='opened'
         )
         ia.save()
         if instance.assignee:

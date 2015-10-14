@@ -1,8 +1,5 @@
-{% extends "issuetracker/base.html" %}
+{% extends "issuetracker/form.html" %}
 
-{% block content %}
-<form action="" method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Create" />
-</form>
+{% block form_buttons %}
+<button type="submit" class="btn btn-success"><span class="glyphicon glyphicon-plus"></span> Add Issue</button>
 {% endblock %}

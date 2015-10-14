@@ -1,62 +1,46 @@
 {% extends "issuetracker/base.html" %}
-{% load django_markdown %}
 
 {% block content %}
 <div class="row">
   <div class="col-sm-9">
-    <div class="panel panel-{% if object.state == 'closed' %}success{% elif object.state == 'new' %}danger{% else %}primary{% endif %}">
-	  <div class="panel-heading">
-	    <h3 class="panel-title">{{ object }}</h3>
-	  </div>
-	  <div class="panel-footer">
-		{% with actions|first as action %}
-	    {{ action|safe }} &dash; {{ action.user }} @ {{ action.date }}
-		{% endwith %}
-	  </div>
-	  <div class="panel-body">
-		{{ object.text|markdown_safe }}
+    <div class="row">
+	  <div class="col-sm-offset-2 col-sm-10">
+	    <h3>{{ object }}</h3>
 	  </div>
 	</div>
-{% if actions %}
-{% for action in actions %}
-{% if not forloop.first %}
-    <div class="panel panel-{% if action.action == 'closed' %}success{% elif object.state == 'new' %}danger{% else %}info{% endif %}">
-	  <div class="panel-heading">
-	    {{ action|safe }} &dash; {{ action.user }} @ {{ action.date }}
-	  </div>
-	  {% if action.text %}
-	  <div class="panel-body">
-		{{ action.text|markdown_safe }}
-	  </div>
-	  {% endif %}
-	</div>
-	  {% endif %}
-      {% endfor %}
-{% endif %}
   </div>
   <div class="col-sm-3">
-    <div class="panel panel-info">
-	  <div class="panel-heading">
-	    <h3 class="panel-title">Info</h3>
-	  </div>
-	  <div class="panel-body">
-    <ul>
-      <li>{{ object.state }}</li>
-      {% with actions|first as action %}
-      <li>{{ action.date }}</li>
-      {% endwith %}
-    </ul>
-	  </div>
-{% if tags %}
-	  <div class="panel-footer">
-    <ul>
-      {% for tag in tags %}
-      <li><span class="label label-default" style="background-color:#{{ tag.tag.colour }}">{{ tag.tag }}</span></li>
-      {% endfor %}
-    </ul>
-	  </div>
-{% endif %}
-	</div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-sm-3 col-sm-push-9">
+    <div class="panel panel-{% if object.closed %}success{% else %}info{% endif %}">
+      <div class="panel-heading">
+        <h3 class="panel-title">Info</h3>
+      </div>
+      <div class="panel-body">
+        <ul>
+          <li>{% if object.closed %}Closed{% elif object.assignee %}Assgined{% else %}Open{% endif %}</li>
+          {% with actions|first as action %}
+          <li>{{ action.date }}</li>
+          {% endwith %}
+        </ul>
+      </div>
+      {% if tags %}
+      <div class="panel-footer">
+        <ul>
+          {% for tag in object.tags %}
+          <li><span class="label label-default" style="background-color:#{{ tag.tag.colour }}">{{ tag.tag }}</span></li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-sm-9 col-sm-pull-3">
+    {% for action in actions %}
+    {% include "issuetracker/issueaction.html" with action=action %}
+    {% endfor %}
   </div>
 </div>
 {% endblock %}
