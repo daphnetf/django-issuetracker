@@ -11,4 +11,6 @@ urlpatterns = [
     url(r'^tags/(?P<pk>[0-9]+)/$', views.TagDetailView.as_view(), name='tag'),
     url(r'^tags/new/$', views.TagCreateView.as_view(), name='new_tag'),
     url(r'^tags/$', views.TagListView.as_view(), name='tags'),
+    url(r'^search/(?P<needle>.*)/$', views.SearchResultView.as_view(), name='search_result'),
+    url(r'^search/$', views.SearchView.as_view(), name='search'),
 ]

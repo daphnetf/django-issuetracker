@@ -1,9 +1,10 @@
 from django.core.urlresolvers import reverse_lazy
+from django.db.models import Q
 from django.views.generic import ListView, TemplateView, FormView, View
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
 
-from issuetracker.forms import IssueActionCommentForm
+from issuetracker.forms import IssueActionCommentForm, SearchForm
 from issuetracker.mixins import LoginRequiredMixin
 from issuetracker.models import Issue, IssueAction, Tag
 
@@ -31,6 +32,7 @@ class IssueCreateView(LoginRequiredMixin, CreateView):
 
 
 class IssueUpdateView(UpdateView):
+
     model = Issue
     fields = ['assignee', 'tags']
     template_name_suffix = '_update_form'
@@ -79,6 +81,7 @@ class IssueDetailDisplayView(DetailView):
 
 
 class IssueDetailCommentView(SingleObjectMixin, FormView):
+
     template_name = 'issuetracker/issue_detail.html'
     form_class = IssueActionCommentForm
     model = Issue
@@ -135,3 +138,35 @@ class TagCreateView(LoginRequiredMixin, CreateView):
 class TagDetailView(DetailView):
 
     model = Tag
+
+
+class SearchResultView(ListView):
+
+    model = Issue
+    
+    def get_template_names(self):
+        return 'issuetracker/search_result.html'
+
+    def get_queryset(self):
+        needle = self.kwargs['needle']
+        ias = IssueAction.objects.filter(text__icontains=needle)
+        pks = ias.values_list('issue', flat=True)
+        return Issue.objects.filter(Q(title__icontains=needle) | Q(id__in=pks))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['needle'] = self.kwargs['needle']
+        return context
+
+
+
+class SearchView(FormView):
+
+    form_class = SearchForm
+    
+    def get_success_url(self):
+        return reverse_lazy('issuetracker:search_result', kwargs={'needle': self.needle})
+
+    def form_valid(self, form):
+        self.needle = form.cleaned_data['needle']
+        return super().form_valid(form)
