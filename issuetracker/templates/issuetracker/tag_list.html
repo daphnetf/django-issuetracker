@@ -5,7 +5,7 @@
 {% if object_list %}
     <ul>
         {% for tag in object_list %}
-        <li><a href="{{ tag.get_absolute_url }}"><span class="badge badge-default" style="background-color:#{{tag.color}}">{{ tag }}</span></a></li>
+        <li><a href="{{ tag.get_absolute_url }}">{% include "issuetracker/tag.html" with tag=tag %}</a></li>
         {% endfor %}
     </ul>
 {% else %}

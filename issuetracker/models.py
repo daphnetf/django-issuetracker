@@ -25,20 +25,21 @@ class Issue(models.Model):
         settings.AUTH_USER_MODEL,
         blank=True,
         null=True,
-        related_name='assignee'
+        related_name='assignee',
     )
     closed = models.BooleanField(
-        default=False
+        default=False,
     )
     reporter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        related_name='repoter'
+        related_name='repoter',
     )
     title = models.CharField(
-        max_length=256
+        max_length=256,
     )
     tags = models.ManyToManyField(
-        'issuetracker.Tag'
+        'issuetracker.Tag',
+        blank=True,
     )
 
     def assigned(self):
@@ -105,3 +106,6 @@ class IssueAction(models.Model):
 
     def __str__(self):
         return self.action
+
+    def get_success_url(self):
+        return reverse_lazy('issuetracker:issue', kwargs={'pk': self.issue.pk})

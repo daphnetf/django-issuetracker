@@ -1,0 +1,12 @@
+<form action="" method="post" class="form-horizontal">{% csrf_token %}
+  {% for field in form %}
+  {% include "issuetracker/form_field.html" with field=field %}
+  {% endfor %}
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      {% block form_buttons %}
+      <button type="submit" class="btn btn-primary">Submit</button>
+      {% endblock %}
+    </div>
+  </div>
+</form>

@@ -4,33 +4,42 @@
 <div class="row">
   <div class="col-sm-9">
     <div class="row">
-	  <div class="col-sm-offset-2 col-sm-10">
-	    <h3>{{ object }}</h3>
-	  </div>
-	</div>
+      <div class="col-sm-offset-2 col-sm-10">
+        <h2>{{ object }}
+        {% if request.user == object.reporter or request.user == object.assignee %}
+        <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+        {% endif %}</h2>
+      </div>
+    </div>
   </div>
   <div class="col-sm-3">
   </div>
 </div>
 <div class="row">
   <div class="col-sm-3 col-sm-push-9">
-    <div class="panel panel-{% if object.closed %}success{% else %}info{% endif %}">
+    <div class="panel panel-{% if object.closed %}success{% elif object.assignee %}info{% else %}danger{% endif %}">
       <div class="panel-heading">
         <h3 class="panel-title">Info</h3>
       </div>
       <div class="panel-body">
-        <ul>
-          <li>{% if object.closed %}Closed{% elif object.assignee %}Assgined{% else %}Open{% endif %}</li>
+        <dl>
+          <dt>State</dt>
+          <dd>{% if object.closed %}Closed{% elif object.assignee %}Assgined{% else %}Open{% endif %}</dd>
           {% with actions|first as action %}
-          <li>{{ action.date }}</li>
+          <dt>Opened</dt>
+          <dd>{{ action.date }}</dd>
           {% endwith %}
-        </ul>
+          {% with actions.last as action %}
+          <dt>Last Change</dt>
+          <dd>{{ action.date }}</dd>
+          {% endwith %}
+        </dl>
       </div>
       {% if tags %}
       <div class="panel-footer">
         <ul>
-          {% for tag in object.tags %}
-          <li><span class="label label-default" style="background-color:#{{ tag.tag.colour }}">{{ tag.tag }}</span></li>
+          {% for tag in tags %}
+          <li>{% include "issuetracker/tag.html" with tag=tag %}</li>
           {% endfor %}
         </ul>
       </div>
@@ -41,6 +50,9 @@
     {% for action in actions %}
     {% include "issuetracker/issueaction.html" with action=action %}
     {% endfor %}
+    {% if request.user.is_authenticated %}
+    {% include "issuetracker/form_base.html" with form=form %}
+    {% endif %}
   </div>
 </div>
 {% endblock %}

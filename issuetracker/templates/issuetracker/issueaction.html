@@ -11,6 +11,9 @@
     <div class="panel panel-{% if action.action == 'closed' %}success{% elif action.action == 'opened' %}danger{% elif action.action == 'assigned' %}info{% else %}default{% endif %}">
       <div class="panel-heading">
         <span class="glyphicon glyphicon-{% if action.action == 'commented' %}comment{% elif action.action == 'closed' %}ok{% elif action.action == 'assigned' %}user{% elif action.action == 'opened' %}plus{% else %}pencil{% endif %}"></span> {{ action }} &dash;  @ {{ action.date }}
+        {% if action.text and request.user == action.user %}
+        <a href="{% url 'issuetracker:issueaction_update' ipk=action.issue.pk pk=action.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+        {% endif %}
       </div>
       {% if action.text %}
       <div class="panel-body">
