@@ -4,7 +4,7 @@ from django.views.generic import ListView, TemplateView, FormView, View
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
 
-from issuetracker.forms import IssueActionCommentForm, SearchForm
+from issuetracker.forms import IssueActionCommentForm, SearchForm, IssueModelForm
 from issuetracker.mixins import LoginRequiredMixin
 from issuetracker.models import Issue, IssueAction, Tag
 
@@ -24,7 +24,8 @@ class IssueListView(ListView):
 class IssueCreateView(LoginRequiredMixin, CreateView):
 
     model = Issue
-    fields = ['title', 'tags']
+    #fields = ['title', 'tags']
+    form_class = IssueModelForm
 
     def form_valid(self, form):
         form.instance.reporter = self.request.user
@@ -34,7 +35,8 @@ class IssueCreateView(LoginRequiredMixin, CreateView):
 class IssueUpdateView(UpdateView):
 
     model = Issue
-    fields = ['assignee', 'tags']
+    #fields = ['assignee', 'tags']
+    form_class = IssueModelForm
     template_name_suffix = '_update_form'
 
     def post(self, request, *args, **kwargs):
@@ -48,18 +50,15 @@ class IssueUpdateView(UpdateView):
             if form.changed_data:
                 if assignee != None \
                         and form.cleaned_data['assignee'] == None:
-                    IssueAction.objects.create(
-                        issue=self.object,
-                        user=request.user,
-                        action='unassigned'
-                    ).save()
+                    self.object.unassign(
+                        request.user
+                    )
                 if assignee == None \
                         and form.cleaned_data['assignee'] != None:
-                    IssueAction.objects.create(
-                        issue=self.object,
-                        user=request.user,
-                        action='assigned'
-                    ).save()
+                    self.object.assign(
+                        request.user,
+                        form.cleaned_data['assignee']
+                    )
             self.form_valid(form)
         else:
             self.form_invalid(form)
@@ -97,6 +96,7 @@ class IssueDetailCommentView(SingleObjectMixin, FormView):
                 issue=self.object,
                 user=request.user,
                 action='commented',
+                icon='comment',
                 text=form.cleaned_data["comment"]
             ).save()
         else:

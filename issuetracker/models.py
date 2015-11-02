@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse_lazy
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 from django_markdown.models import MarkdownField
 from django_markdown.utils import markdown as _markdown
 
@@ -56,7 +57,8 @@ class Issue(models.Model):
         IssueAction.objects.create(
             issue=self,
             user=user,
-            action='assigned'
+            icon='user',
+            action=_('assigned to {assignee}'.format(assignee=assignee))
         ).save()
 
     def unassign(self, user):
@@ -64,7 +66,8 @@ class Issue(models.Model):
         IssueAction.objects.create(
             issue=self,
             user=user,
-            action='unassigned'
+            icon='pencil',
+            action=_('removed assignement')
         ).save()
 
     def close(self, user):
@@ -72,7 +75,8 @@ class Issue(models.Model):
         IssueAction.objects.create(
             issue=self,
             user=user,
-            action='closed'
+            icon='ok',
+            action=_('closed')
         ).save()
 
     def open(self, user):
@@ -80,7 +84,8 @@ class Issue(models.Model):
         IssueAction.objects.create(
             issue=self,
             user=user,
-            action='opened'
+            icon='plus',
+            action=_('opened')
         ).save()
 
 
@@ -98,6 +103,10 @@ class IssueAction(models.Model):
     )
     action = models.CharField(
         max_length=256
+    )
+    icon = models.CharField(
+        max_length=256,
+        default='pencil'
     )
     date = models.DateTimeField(
         auto_now_add=True

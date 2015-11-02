@@ -25,6 +25,12 @@
         <dl>
           <dt>State</dt>
           <dd>{% if object.closed %}Closed{% elif object.assignee %}Assgined{% else %}Open{% endif %}</dd>
+          <dt>Assignee</dt>
+          <dd>
+          {% if object.assignee %}{{ object.assignee.username }}{% else %}-{% endif %}
+          {% if request.user == object.reporter or request.user == object.assignee %}
+          <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+          {% endif %}</dd>
           {% with actions|first as action %}
           <dt>Opened</dt>
           <dd>{{ action.date }}</dd>
@@ -37,11 +43,9 @@
       </div>
       {% if tags %}
       <div class="panel-footer">
-        <ul>
-          {% for tag in tags %}
-          <li>{% include "issuetracker/tag.html" with tag=tag %}</li>
-          {% endfor %}
-        </ul>
+        {% for tag in tags %}
+        {% include "issuetracker/tag.html" with tag=tag %}
+        {% endfor %}
       </div>
       {% endif %}
     </div>
