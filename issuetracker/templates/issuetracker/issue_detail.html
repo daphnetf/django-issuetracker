@@ -1,22 +1,22 @@
 {% extends "issuetracker/base.html" %}
+{% load django_markdown %}
 
 {% block content %}
 <div class="row">
   <div class="col-sm-9">
-    <div class="row">
-      <div class="col-sm-offset-2 col-sm-10">
-        <h2>{{ object }}
-        {% if request.user == object.reporter or request.user == object.assignee %}
-        <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
-        {% endif %}</h2>
-      </div>
-    </div>
+    <h2>{{ object }}
+    {% if request.user == object.reporter or request.user == object.assignee %}
+    <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+    {% endif %}</h2>
+    {{ object.description|markdown_safe }}
+    {% for action in actions %}
+    {% include "issuetracker/issueaction.html" with action=action %}
+    {% endfor %}
+    {% if request.user.is_authenticated %}
+    {% include "issuetracker/form_base.html" with form=form %}
+    {% endif %}
   </div>
   <div class="col-sm-3">
-  </div>
-</div>
-<div class="row">
-  <div class="col-sm-3 col-sm-push-9">
     <div class="panel panel-{% if object.closed %}success{% elif object.assignee %}info{% else %}danger{% endif %}">
       <div class="panel-heading">
         <h3 class="panel-title">Info</h3>
@@ -29,7 +29,7 @@
           <dd>
           {% if object.assignee %}{{ object.assignee.username }}{% else %}-{% endif %}
           {% if request.user == object.reporter or request.user == object.assignee %}
-          <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
           {% endif %}</dd>
           {% with actions|first as action %}
           <dt>Opened</dt>
@@ -46,17 +46,12 @@
         {% for tag in tags %}
         {% include "issuetracker/tag.html" with tag=tag %}
         {% endfor %}
+        {% if request.user == object.reporter or request.user == object.assignee %}
+        <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+        {% endif %}
       </div>
       {% endif %}
     </div>
-  </div>
-  <div class="col-sm-9 col-sm-pull-3">
-    {% for action in actions %}
-    {% include "issuetracker/issueaction.html" with action=action %}
-    {% endfor %}
-    {% if request.user.is_authenticated %}
-    {% include "issuetracker/form_base.html" with form=form %}
-    {% endif %}
   </div>
 </div>
 {% endblock %}

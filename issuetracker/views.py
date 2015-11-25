@@ -4,7 +4,8 @@ from django.views.generic import ListView, TemplateView, FormView, View
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
 
-from issuetracker.forms import IssueActionCommentForm, SearchForm, IssueModelForm
+from issuetracker.forms import IssueActionCommentForm, SearchForm, \
+    IssueModelForm, IssueMetaModelForm
 from issuetracker.mixins import LoginRequiredMixin
 from issuetracker.models import Issue, IssueAction, Tag
 
@@ -24,7 +25,6 @@ class IssueListView(ListView):
 class IssueCreateView(LoginRequiredMixin, CreateView):
 
     model = Issue
-    #fields = ['title', 'tags']
     form_class = IssueModelForm
 
     def form_valid(self, form):
@@ -35,8 +35,38 @@ class IssueCreateView(LoginRequiredMixin, CreateView):
 class IssueUpdateView(UpdateView):
 
     model = Issue
-    #fields = ['assignee', 'tags']
     form_class = IssueModelForm
+    template_name_suffix = '_update_form'
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            return HttpResponseForbidden()
+        self.object = self.get_object()
+        form = self.get_form()
+        title = form.instance.title
+        description = form.instance.description
+        if form.is_valid():
+            if form.changed_data:
+                if description != form.cleaned_data['description']:
+                    self.object.changed(
+                        request.user,
+                        'description'
+                    )
+                if title != form.cleaned_data['title']:
+                    self.object.changed(
+                        request.user,
+                        'title'
+                    )
+            self.form_valid(form)
+        else:
+            self.form_invalid(form)
+        return super().post(request, *args, **kwargs)
+
+
+class IssueMetaUpdateView(UpdateView):
+
+    model = Issue
+    form_class = IssueMetaModelForm
     template_name_suffix = '_update_form'
 
     def post(self, request, *args, **kwargs):

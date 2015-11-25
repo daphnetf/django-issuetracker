@@ -42,6 +42,10 @@ class Issue(models.Model):
         'issuetracker.Tag',
         blank=True,
     )
+    description = MarkdownField(
+        blank=True,
+        null=True,
+    )
 
     def assigned(self):
         return self.assignee != None
@@ -58,7 +62,7 @@ class Issue(models.Model):
             issue=self,
             user=user,
             icon='user',
-            action=_('assigned to {assignee}'.format(assignee=assignee))
+            action=_('changed assignement to {assignee}'.format(assignee=assignee))
         ).save()
 
     def unassign(self, user):
@@ -86,6 +90,14 @@ class Issue(models.Model):
             user=user,
             icon='plus',
             action=_('opened')
+        ).save()
+
+    def changed(self, user, thing):
+        IssueAction.objects.create(
+            issue=self,
+            user=user,
+            icon='pencil',
+            action=_('changed issue {thing}'.format(thing=thing))
         ).save()
 
 

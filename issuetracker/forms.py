@@ -16,5 +16,11 @@ class IssueModelForm(forms.ModelForm):
 
     class Meta:
         model = Issue
-        fields = ['title', 'assignee', 'tags']
+        fields = ['title', 'description']
+
+class IssueMetaModelForm(forms.ModelForm):
+
+    class Meta:
+        model = Issue
+        fields = ['assignee', 'tags']
         widgets = {'tags': forms.CheckboxSelectMultiple}
