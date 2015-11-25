@@ -1,7 +1,10 @@
 {% extends "issuetracker/base.html" %}
+{% load i18n %}
 
 {% block content %}
-    <h2><span class="glyphicon glyphicon-tags"></span> Tags</h2>
+    <h2><span class="glyphicon glyphicon-tags"></span> {% trans "Tags" %}
+    <a class="btn btn-success"class="btn btn-success" href="{% url 'issuetracker:new_tag' %}"><span class="glyphicon glyphicon-plus"></span> {% trans "Create new Tag" %}</a>
+    </h2>
 {% if object_list %}
     <ul>
         {% for tag in object_list %}
@@ -9,6 +12,6 @@
         {% endfor %}
     </ul>
 {% else %}
-    <p>No tags</p>
+    <p>{% trans "No tags" %}</p>
 {% endif %}
 {% endblock %}
