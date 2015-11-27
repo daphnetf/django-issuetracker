@@ -25,7 +25,7 @@ class Tox(TestCommand):
         errno = tox.cmdline(args=args)
         sys.exit(errno)
 
-version = __import__('issuetracker').__VERSION__
+version = __import__('issuetracker').get_release()
 
 with open("requirements.txt") as f:
     required = [l for l in f.read().splitlines() if not l.startswith("#")]
