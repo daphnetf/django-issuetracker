@@ -6,12 +6,30 @@ from django_markdown.models import MarkdownField
 from django_markdown.utils import markdown as _markdown
 
 
+class Project(models.Model):
+    name = models.CharField(
+        max_length=256
+    )
+    developers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL
+    )
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse_lazy('issuetracker:project', kwargs={'pk': self.pk})
+
+
 class Tag(models.Model):
     name = models.CharField(
         max_length=256
     )
     color = models.CharField(
         max_length=6
+    )
+    project = models.ForeignKey(
+        Project
     )
 
     def __str__(self):
@@ -43,8 +61,9 @@ class Issue(models.Model):
         blank=True,
     )
     description = MarkdownField(
-        blank=True,
-        null=True,
+    )
+    project = models.ForeignKey(
+        Project
     )
 
     def assigned(self):
@@ -100,6 +119,15 @@ class Issue(models.Model):
             action=_('changed issue {thing}'.format(thing=thing))
         ).save()
 
+    def can_edit(self, user):
+        if self.project.developers.filter(username=user.username).exists():
+            return True
+        if self.assignee == user:
+            return True
+        if self.reporter == user:
+            return True
+        return False
+
 
 class IssueAction(models.Model):
 
@@ -123,10 +151,19 @@ class IssueAction(models.Model):
     date = models.DateTimeField(
         auto_now_add=True
     )
-    text = MarkdownField()
 
     def __str__(self):
         return self.action
 
     def get_success_url(self):
         return reverse_lazy('issuetracker:issue', kwargs={'pk': self.issue.pk})
+
+
+class IssueComment(IssueAction):
+
+    text = MarkdownField()
+
+
+class IssueAttachement(IssueAction):
+
+    file = models.FileField()

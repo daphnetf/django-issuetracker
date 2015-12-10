@@ -4,10 +4,11 @@ from django.views.generic import ListView, TemplateView, FormView, View
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
 
-from issuetracker.forms import IssueActionCommentForm, SearchForm, \
+from issuetracker.forms import IssueCommentForm, SearchForm, \
     IssueModelForm, IssueMetaModelForm
-from issuetracker.mixins import LoginRequiredMixin
-from issuetracker.models import Issue, IssueAction, Tag
+from issuetracker.mixins import LoginRequiredMixin, IssueViewMixin, \
+    ProjectViewMixin
+from issuetracker.models import Project, Issue, IssueAction, Tag
 
 
 
@@ -16,23 +17,52 @@ class HomeView(TemplateView):
     template_name = 'issuetracker/home.html'
 
 
-class IssueListView(ListView):
+class ProjectListView(ProjectViewMixin, ListView):
+
+    model = Project
+    paginate_by = 10
+
+
+class ProjectCreateView(LoginRequiredMixin, CreateView):
+
+    model = Project
+
+
+class ProjectUpdateView(LoginRequiredMixin, ProjectViewMixin, UpdateView):
+
+    model = Project
+    template_name_suffix = '_update_form'
+
+    def get_object(self):
+        return self.project
+
+
+class ProjectDetailView(ProjectViewMixin, DetailView):
+
+    model = Project
+
+    def get_object(self):
+        return self.project
+
+
+class IssueListView(ProjectListView, ListView):
 
     model = Issue
     paginate_by = 10
 
 
-class IssueCreateView(LoginRequiredMixin, CreateView):
+class IssueCreateView(LoginRequiredMixin, ProjectViewMixin, CreateView):
 
     model = Issue
     form_class = IssueModelForm
 
     def form_valid(self, form):
         form.instance.reporter = self.request.user
+        form.instance.project = self.project
         return super().form_valid(form)
 
 
-class IssueUpdateView(UpdateView):
+class IssueUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
 
     model = Issue
     form_class = IssueModelForm
@@ -62,8 +92,11 @@ class IssueUpdateView(UpdateView):
             self.form_invalid(form)
         return super().post(request, *args, **kwargs)
 
+    def get_object(self):
+        return self.issue
 
-class IssueMetaUpdateView(UpdateView):
+
+class IssueMetaUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
 
     model = Issue
     form_class = IssueMetaModelForm
@@ -94,25 +127,31 @@ class IssueMetaUpdateView(UpdateView):
             self.form_invalid(form)
         return super().post(request, *args, **kwargs)
 
+    def get_object(self):
+        return self.issue
 
-class IssueDetailDisplayView(DetailView):
+
+class IssueDetailDisplayView(IssueViewMixin, DetailView):
 
     model = Issue
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = IssueActionCommentForm()
+        context['form'] = IssueCommentForm()
         context['tags'] = context['object'].tags.all()
         context['actions'] = IssueAction.objects.filter(
             issue=context['object']
         )
         return context
 
+    def get_object(self):
+        return self.issue
 
-class IssueDetailCommentView(SingleObjectMixin, FormView):
+
+class IssueDetailCommentView(SingleObjectMixin, IssueViewMixin, FormView):
 
     template_name = 'issuetracker/issue_detail.html'
-    form_class = IssueActionCommentForm
+    form_class = IssueCommentForm
     model = Issue
 
     def post(self, request, *args, **kwargs):
@@ -136,6 +175,9 @@ class IssueDetailCommentView(SingleObjectMixin, FormView):
     def get_success_url(self):
         return reverse_lazy('issuetracker:issue', kwargs={'pk': self.object.pk})
 
+    def get_object(self):
+        return self.issue
+
 
 class IssueDetailView(View):
 
@@ -148,24 +190,34 @@ class IssueDetailView(View):
         return view(request, *args, **kwargs)
 
 
-class IssueActionUpdateView(UpdateView):
+class IssueActionUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
     model = IssueAction
     fields = ['text']
     template_name_suffix = '_update_form'
 
 
-class TagListView(ListView):
+class TagListView(ProjectViewMixin, ListView):
 
     model = Tag
 
 
-class TagCreateView(LoginRequiredMixin, CreateView):
+class TagCreateView(LoginRequiredMixin, ProjectViewMixin, CreateView):
+
+    model = Tag
+    fields = ['name', 'color']
+
+    def form_valid(self, form):
+        form.instance.project = self.project
+        return super().form_valid(form)
+
+
+class TagUpdateView(LoginRequiredMixin, ProjectViewMixin, UpdateView):
 
     model = Tag
     fields = ['name', 'color']
 
 
-class TagDetailView(DetailView):
+class TagDetailView(ProjectViewMixin, DetailView):
 
     model = Tag
 

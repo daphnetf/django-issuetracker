@@ -1,11 +1,13 @@
 {% extends "issuetracker/base.html" %}
 {% load django_markdown %}
+{% load issue_ttags %}
 
 {% block content %}
+{% can_edit object request.user as can_edit_issue %}
 <div class="row">
   <div class="col-sm-9">
     <h2>{{ object }}
-    {% if request.user == object.reporter or request.user == object.assignee %}
+    {% if can_edit_issue %}
     <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
     {% endif %}</h2>
     {{ object.description|markdown_safe }}
@@ -28,7 +30,7 @@
           <dt>Assignee</dt>
           <dd>
           {% if object.assignee %}{{ object.assignee.username }}{% else %}-{% endif %}
-          {% if request.user == object.reporter or request.user == object.assignee %}
+          {% if can_edit_issue %}
           <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
           {% endif %}</dd>
           {% with actions|first as action %}
@@ -46,7 +48,7 @@
         {% for tag in tags %}
         {% include "issuetracker/tag.html" with tag=tag %}
         {% endfor %}
-        {% if request.user == object.reporter or request.user == object.assignee %}
+        {% if can_edit_issue %}
         <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
         {% endif %}
       </div>

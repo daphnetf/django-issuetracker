@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django_markdown.admin import MarkdownModelAdmin
-from issuetracker.models import Issue, Tag, IssueAction
+from issuetracker.models import Issue, Tag, IssueAction, Project
+
+
+class ProjectAdmin(admin.ModelAdmin):
+    pass
+admin.site.register(Project, ProjectAdmin)
 
 
 class TagAdmin(admin.ModelAdmin):
