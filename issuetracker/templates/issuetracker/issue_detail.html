@@ -11,7 +11,7 @@
     <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
     {% endif %}</h2>
     {{ object.description|markdown_safe }}
-    {% for action in actions %}
+    {% for action in object.actions %}
     {% include "issuetracker/issueaction.html" with action=action %}
     {% endfor %}
     {% if request.user.is_authenticated %}
@@ -33,11 +33,11 @@
           {% if can_edit_issue %}
           <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
           {% endif %}</dd>
-          {% with actions|first as action %}
+          {% with object.actions|first as action %}
           <dt>Opened</dt>
           <dd>{{ action.date }}</dd>
           {% endwith %}
-          {% with actions.last as action %}
+          {% with object.actions.last as action %}
           <dt>Last Change</dt>
           <dd>{{ action.date }}</dd>
           {% endwith %}

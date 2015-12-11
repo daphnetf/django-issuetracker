@@ -5,6 +5,8 @@ from django.utils.translation import ugettext_lazy as _
 from django_markdown.models import MarkdownField
 from django_markdown.utils import markdown as _markdown
 
+from itertools import chain
+
 
 class Project(models.Model):
     name = models.CharField(
@@ -65,6 +67,12 @@ class Issue(models.Model):
     project = models.ForeignKey(
         Project
     )
+
+    def actions(self):
+        attachements = IssueAttachement.objects.filter(issue=self)
+        comments = IssueComment.objects.filter(issue=self)
+        actions = IssueAction.objects.filter(issue=self).exclude(pk__in=attachements).exclude(pk__in=comments)
+        return list(chain(actions, comments, attachements))
 
     def assigned(self):
         return self.assignee != None

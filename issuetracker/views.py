@@ -8,7 +8,8 @@ from issuetracker.forms import IssueCommentForm, SearchForm, \
     IssueModelForm, IssueMetaModelForm
 from issuetracker.mixins import LoginRequiredMixin, IssueViewMixin, \
     ProjectViewMixin
-from issuetracker.models import Project, Issue, IssueAction, Tag
+from issuetracker.models import Project, Issue, IssueAction, \
+    IssueComment, IssueAttachement, Tag
 
 
 
@@ -139,9 +140,6 @@ class IssueDetailDisplayView(IssueViewMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['form'] = IssueCommentForm()
         context['tags'] = context['object'].tags.all()
-        context['actions'] = IssueAction.objects.filter(
-            issue=context['object']
-        )
         return context
 
     def get_object(self):
@@ -161,7 +159,7 @@ class IssueDetailCommentView(SingleObjectMixin, IssueViewMixin, FormView):
         form = self.get_form()
         if form.is_valid():
             self.form_valid(form)
-            IssueAction.objects.create(
+            IssueComment.objects.create(
                 issue=self.object,
                 user=request.user,
                 action='commented',
