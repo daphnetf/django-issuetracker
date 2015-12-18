@@ -1,13 +1,21 @@
 {% extends "issuetracker/base.html" %}
 
 {% block content %}
-    <h2><span class="glyphicon glyphicon-search"></span> Search Results for <span class="label label-{% if object_list %}success{% else %}default{% endif %}">{{ needle }}</span></h2>
+    <h2><span class="glyphicon glyphicon-search"></span> Search Results for &quot;{{ needle }}&quot;</h2>
 {% if object_list %}
-    <ul>
+    <div class="list-group issue-list">
         {% for issue in object_list %}
-        <li><a href="{{ issue.get_absolute_url }}">{{ issue }}</a></li>
+        <a href="{{ issue.get_absolute_url }}" class="list-group-item">
+            <dl>
+                <dt>{% if issue.closed %}<span class="glyphicon glyphicon-ok-sign"></span>{% else %}<span class="glyphicon glyphicon-question-sign"></span>{% endif %} {{ issue }}
+                {% for tag in issue.get_tags %}
+                {% include "issuetracker/tag.html" with tag=tag %}
+                {% endfor %}</dt>
+                <dd>#{{ issue.pk }} by {{ issue.reporter }}</dd>
+            </dl>
+        </a>
         {% endfor %}
-    </ul>
+    </div>
 {% else %}
     <p>No issues</p>
 {% endif %}

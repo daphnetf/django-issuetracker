@@ -6,7 +6,7 @@
 {% can_edit object request.user as can_edit_issue %}
 <div class="row">
   <div class="col-sm-9">
-    <h2>{{ object }}
+    <h2><span class="small label label-{% if issue.closed %}closed{% else %}open{% endif %}">{% if issue.closed %}<span class="glyphicon glyphicon-ok-sign"></span> Closed{% else %}<span class="glyphicon glyphicon-question-sign"></span> Open{% endif %}</span> {{ object }}
     {% if can_edit_issue %}
     <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
     {% endif %}</h2>
@@ -23,38 +23,34 @@
     {% endif %}
   </div>
   <div class="col-sm-3">
-    <div class="panel panel-{% if object.closed %}success{% elif object.assignee %}info{% else %}danger{% endif %}">
+    <div class="panel panel-success">
       <div class="panel-heading">
-        <h3 class="panel-title">Info</h3>
+        <h3 class="panel-title">Info
+        {% if can_edit_issue %}
+        <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
+        {% endif %}</h3>
       </div>
       <div class="panel-body">
         <dl>
           <dt>State</dt>
           <dd>{% if object.closed %}Closed{% elif object.assignee %}Assgined{% else %}Open{% endif %}</dd>
           <dt>Assignee</dt>
-          <dd>
-          {% if object.assignee %}{{ object.assignee.username }}{% else %}-{% endif %}
-          {% if can_edit_issue %}
-          <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
-          {% endif %}</dd>
+          <dd>{% if object.assignee %}{{ object.assignee.username }}{% else %}-{% endif %}</dd>
           {% with object.actions|first as action %}
           <dt>Opened</dt>
-          <dd>{{ action.date }}</dd>
+          <dd>{{ action.created }}</dd>
           {% endwith %}
-          {% with object.actions.last as action %}
+          {% with object.actions|last as action %}
           <dt>Last Change</dt>
-          <dd>{{ action.date }}</dd>
+          <dd>{{ action.changed }}</dd>
           {% endwith %}
         </dl>
       </div>
-      {% if tags %}
+      {% if object.get_tags %}
       <div class="panel-footer">
-        {% for tag in tags %}
+        {% for tag in object.get_tags %}
         {% include "issuetracker/tag.html" with tag=tag %}
         {% endfor %}
-        {% if can_edit_issue %}
-        <a href="{% url 'issuetracker:issue_update_meta' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
-        {% endif %}
       </div>
       {% endif %}
     </div>

@@ -52,7 +52,7 @@ class IssueListView(ProjectListView, ListView):
     paginate_by = 10
 
 
-class IssueCreateView(LoginRequiredMixin, ProjectViewMixin, PreviewFormMixin, CreateView):
+class IssueCreateView(ProjectViewMixin, PreviewFormMixin, CreateView):
 
     model = Issue
     form_class = IssueModelForm
@@ -141,14 +141,13 @@ class IssueDetailDisplayView(IssueViewMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['form'] = IssueCommentForm()
-        context['tags'] = context['object'].tags.all()
         return context
 
     def get_object(self):
         return self.issue
 
 
-class IssueDetailCommentView(SingleObjectMixin, IssueViewMixin, FormView):
+class IssueDetailCommentView(SingleObjectMixin, PreviewFormMixin, IssueViewMixin, FormView):
 
     template_name = 'issuetracker/issue_detail.html'
     form_class = IssueCommentForm
@@ -167,10 +166,14 @@ class IssueDetailCommentView(SingleObjectMixin, IssueViewMixin, FormView):
                 action='commented',
                 icon='comment',
                 text=form.cleaned_data["comment"]
-            ).save()
+            )
         else:
             self.form_invalid(form)
-        return super().post(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)
+    
+    def preview(self, form):
+        self.preview_data = form.instance.text
+        return super().preview(form)
 
     def get_success_url(self):
         return reverse_lazy('issuetracker:issue', kwargs={'pk': self.object.pk})
@@ -190,10 +193,13 @@ class IssueDetailView(View):
         return view(request, *args, **kwargs)
 
 
-class IssueActionUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
-    model = IssueAction
+class IssueCommentUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
+    model = IssueComment
     fields = ['text']
     template_name_suffix = '_update_form'
+
+    def get_success_url(self):
+        return reverse_lazy('issuetracker:issue', kwargs={'pk': self.issue.pk})
 
 
 class TagListView(ProjectViewMixin, ListView):

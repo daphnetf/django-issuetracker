@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse_lazy
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from itertools import chain
@@ -98,7 +99,7 @@ class Issue(models.Model):
             user=user,
             icon='user',
             action=_('changed assignement to {assignee}'.format(assignee=assignee))
-        ).save()
+        )
 
     def unassign(self, user):
         self.assignee = None
@@ -107,7 +108,7 @@ class Issue(models.Model):
             user=user,
             icon='pencil',
             action=_('removed assignement')
-        ).save()
+        )
 
     def close(self, user):
         self.closed = True
@@ -116,7 +117,7 @@ class Issue(models.Model):
             user=user,
             icon='ok',
             action=_('closed')
-        ).save()
+        )
 
     def open(self, user):
         self.closed = False
@@ -125,7 +126,7 @@ class Issue(models.Model):
             user=user,
             icon='plus',
             action=_('opened')
-        ).save()
+        )
 
     def changed(self, user, thing):
         IssueAction.objects.create(
@@ -133,7 +134,7 @@ class Issue(models.Model):
             user=user,
             icon='pencil',
             action=_('changed issue {thing}'.format(thing=thing))
-        ).save()
+        )
 
     def can_edit(self, user):
         if self.project.can_edit(user):
@@ -144,29 +145,48 @@ class Issue(models.Model):
             return True
         return False
 
+    def get_tags(self):
+        return self.tags.all()
+
 
 class IssueAction(models.Model):
 
     class Meta:
-        get_latest_by = 'date'
+        get_latest_by = 'created'
         order_with_respect_to = 'issue'
 
     issue = models.ForeignKey(
-        'issuetracker.Issue'
+        'issuetracker.Issue',
     )
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL
+        settings.AUTH_USER_MODEL,
     )
     action = models.CharField(
-        max_length=256
+        max_length=256,
     )
     icon = models.CharField(
         max_length=256,
-        default='pencil'
+        default='pencil',
     )
-    date = models.DateTimeField(
-        auto_now_add=True
+    created = models.DateTimeField(
+        editable=False,
+        blank=True,
     )
+    changed = models.DateTimeField(
+        editable=False,
+        blank=True,
+    )
+
+    def save(self, *args, **kwargs):
+        now = timezone.now()
+        if not self.pk:
+            self.created = now
+        self.changed = now
+        print(self.__dict__)
+        super().save(*args, **kwargs)
+
+    def is_changed(self):
+        return self.created < self.changed
 
     def __str__(self):
         return self.action

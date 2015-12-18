@@ -1,12 +1,37 @@
+{% load django_markdown %}
+
+{% block content %}
+{% if preview_mode %}
+<div class="row">
+  <div class="col-sm-12">
+    <div class="panel">
+      <div class="panel-body">
+{{ preview|markdown_safe }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 <form action="" method="post" class="form-horizontal">{% csrf_token %}
   {% for field in form %}
-  {% include "issuetracker/form_field.html" with field=field %}
+    {% if preview_mode %}
+    <input type="hidden" name="{{ field.name }}" value="{{ field.value }}" />
+    {% else %}
+    {% include "issuetracker/form_field.html" with field=field %}
+    {% endif %}
   {% endfor %}
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
+      <button type="submit" name="cancel" class="btn btn-default">Cancel</button>
+      {% if preview_mode %}
+      <button type="submit" name="edit" class="btn btn-default">Edit</button>
+      {% else %}
+      <button type="submit" name="preview" class="btn btn-default">Preview</button>
+      {% endif %}
       {% block form_buttons %}
       <button type="submit" class="btn btn-primary">Submit</button>
       {% endblock %}
     </div>
   </div>
 </form>
+{% endblock %}

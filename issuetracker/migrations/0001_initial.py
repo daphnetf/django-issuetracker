@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 from django.conf import settings
-import django_markdown.models
 
 
 class Migration(migrations.Migration):
@@ -16,29 +15,30 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Issue',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
                 ('closed', models.BooleanField(default=False)),
                 ('title', models.CharField(max_length=256)),
-                ('description', django_markdown.models.MarkdownField()),
-                ('assignee', models.ForeignKey(null=True, blank=True, to=settings.AUTH_USER_MODEL, related_name='assignee')),
+                ('description', models.TextField()),
+                ('assignee', models.ForeignKey(null=True, to=settings.AUTH_USER_MODEL, related_name='assignee', blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='IssueAction',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
                 ('action', models.CharField(max_length=256)),
-                ('icon', models.CharField(default='pencil', max_length=256)),
-                ('date', models.DateTimeField(auto_now_add=True)),
+                ('icon', models.CharField(max_length=256, default='pencil')),
+                ('created', models.DateTimeField(auto_now_add=True)),
+                ('changed', models.DateTimeField(auto_now=True)),
             ],
             options={
-                'get_latest_by': 'date',
+                'get_latest_by': 'created',
             },
         ),
         migrations.CreateModel(
             name='Project',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
                 ('name', models.CharField(max_length=256)),
                 ('developers', models.ManyToManyField(to=settings.AUTH_USER_MODEL)),
             ],
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Tag',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(primary_key=True, serialize=False, verbose_name='ID', auto_created=True)),
                 ('name', models.CharField(max_length=256)),
                 ('color', models.CharField(max_length=6)),
                 ('project', models.ForeignKey(to='issuetracker.Project')),
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='IssueAttachement',
             fields=[
-                ('issueaction_ptr', models.OneToOneField(primary_key=True, to='issuetracker.IssueAction', auto_created=True, serialize=False, parent_link=True)),
+                ('issueaction_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, to='issuetracker.IssueAction', serialize=False)),
                 ('file', models.FileField(upload_to='')),
             ],
             bases=('issuetracker.issueaction',),
@@ -63,8 +63,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='IssueComment',
             fields=[
-                ('issueaction_ptr', models.OneToOneField(primary_key=True, to='issuetracker.IssueAction', auto_created=True, serialize=False, parent_link=True)),
-                ('text', django_markdown.models.MarkdownField()),
+                ('issueaction_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, to='issuetracker.IssueAction', serialize=False)),
+                ('text', models.TextField()),
             ],
             bases=('issuetracker.issueaction',),
         ),

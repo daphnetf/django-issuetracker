@@ -1,19 +1,22 @@
 {% load django_markdown %}
 <div class="row">
   <div class="col-sm-12">
-    <div class="panel panel-{% if action.action == 'closed' %}success{% elif action.action == 'opened' %}danger{% elif action.action == 'assigned' %}info{% else %}default{% endif %}">
+    <div class="panel panel-{% if action.action == 'closed' %}closed{% elif action.action == 'opened' %}opened{% elif action.action == 'assigned' %}info{% else %}default{% endif %}">
       <div class="panel-heading">
         <span class="glyphicon glyphicon-{% if action.action == 'commented' %}comment{% elif action.action == 'closed' %}ok{% elif action.action == 'assigned' %}user{% elif action.action == 'opened' %}plus{% else %}pencil{% endif %}"></span> <strong>{{ action.user }}</strong> {{ action }}
         <span style="float: right;">
         {% if action.text and request.user == action.user %}
-        <a href="{% url 'issuetracker:issueaction_update' ipk=action.issue.pk pk=action.pk %}"><span class="glyphicon glyphicon-pencil"></span></a> 
+        <a href="{% url 'issuetracker:issuecomment_update' issue=action.issue.pk pk=action.pk %}"><span class="glyphicon glyphicon-pencil"></span></a> 
         {% endif %}
-        {{ action.date }}
+        {{ action.created }}
         </span>
       </div>
       {% if action.text %}
       <div class="panel-body">
         {{ action.text|markdown_safe }}
+      {% if action.is_changed %}
+        <small><em>Last time edited: {{ action.changed }}</em></small>
+      {% endif %}
       </div>
       {% endif %}
     </div>

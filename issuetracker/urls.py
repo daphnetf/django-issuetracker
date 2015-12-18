@@ -3,7 +3,7 @@ from issuetracker import views
 
 urlpatterns = [
     url(r'^$', views.ProjectDetailView.as_view(), name='project'),
-    url(r'^issues/(?P<ipk>[0-9]+)/(?P<pk>[0-9]+)/$', views.IssueActionUpdateView.as_view(), name='issueaction_update'),
+    url(r'^issues/(?P<issue>[0-9]+)/(?P<pk>[0-9]+)/$', views.IssueCommentUpdateView.as_view(), name='issuecomment_update'),
     url(r'^issues/(?P<pk>[0-9]+)/update/$', views.IssueUpdateView.as_view(), name='issue_update'),
     url(r'^issues/(?P<pk>[0-9]+)/meta/$', views.IssueMetaUpdateView.as_view(), name='issue_update_meta'),
     url(r'^issues/(?P<pk>[0-9]+)/$', views.IssueDetailView.as_view(), name='issue'),
