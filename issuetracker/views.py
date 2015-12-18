@@ -75,11 +75,9 @@ class IssueUpdateView(LoginRequiredMixin, IssueViewMixin, PreviewFormMixin, Upda
 
     def form_valid(self, form):
         self.object = self.get_object()
-        print(self.object.__dict__)
         form.instance.id = self.issue.id
         form.instance.project = self.issue.project
         form.instance.reporter = self.issue.reporter
-        print(form.instance.__dict__)
         if form.changed_data:
             if self.issue.description != form.cleaned_data['description']:
                 self.issue.changed(
