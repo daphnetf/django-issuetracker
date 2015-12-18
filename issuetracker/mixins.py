@@ -37,3 +37,35 @@ class IssueViewMixin(ProjectViewMixin):
         )
         return super().dispatch(request, *args, **kwargs)
 
+
+class PreviewFormMixin(object):
+    def dispatch(self, request, *args, **kwargs):
+        self.preview_mode = False
+        self.request = request
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not hasattr(self, 'object'):
+            self.object = None
+        self.preview_data = ''
+        form = self.get_form()
+        valid = form.is_valid()
+        if 'preview' in request.POST:
+            return self.preview(form)
+        if 'edit' in request.POST:
+            return self.form_invalid(form)
+        if valid:
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def preview(self, form):
+        self.preview_mode = True
+        return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['preview_mode'] = self.preview_mode
+        if context['preview_mode']:
+            context['preview'] = self.preview_data
+        return context

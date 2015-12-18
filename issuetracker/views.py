@@ -7,7 +7,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from issuetracker.forms import IssueCommentForm, SearchForm, \
     IssueModelForm, IssueMetaModelForm
 from issuetracker.mixins import LoginRequiredMixin, IssueViewMixin, \
-    ProjectViewMixin
+    ProjectViewMixin, PreviewFormMixin
 from issuetracker.models import Project, Issue, IssueAction, \
     IssueComment, IssueAttachement, Tag
 
@@ -52,7 +52,7 @@ class IssueListView(ProjectListView, ListView):
     paginate_by = 10
 
 
-class IssueCreateView(LoginRequiredMixin, ProjectViewMixin, CreateView):
+class IssueCreateView(LoginRequiredMixin, ProjectViewMixin, PreviewFormMixin, CreateView):
 
     model = Issue
     form_class = IssueModelForm
@@ -61,37 +61,41 @@ class IssueCreateView(LoginRequiredMixin, ProjectViewMixin, CreateView):
         form.instance.reporter = self.request.user
         form.instance.project = self.project
         return super().form_valid(form)
+    
+    def preview(self, form):
+        self.preview_data = form.instance.description
+        return super().preview(form)
 
 
-class IssueUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
+class IssueUpdateView(LoginRequiredMixin, IssueViewMixin, PreviewFormMixin, UpdateView):
 
     model = Issue
     form_class = IssueModelForm
     template_name_suffix = '_update_form'
 
-    def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated():
-            return HttpResponseForbidden()
+    def form_valid(self, form):
         self.object = self.get_object()
-        form = self.get_form()
-        title = form.instance.title
-        description = form.instance.description
-        if form.is_valid():
-            if form.changed_data:
-                if description != form.cleaned_data['description']:
-                    self.object.changed(
-                        request.user,
-                        'description'
-                    )
-                if title != form.cleaned_data['title']:
-                    self.object.changed(
-                        request.user,
-                        'title'
-                    )
-            self.form_valid(form)
-        else:
-            self.form_invalid(form)
-        return super().post(request, *args, **kwargs)
+        print(self.object.__dict__)
+        form.instance.id = self.issue.id
+        form.instance.project = self.issue.project
+        form.instance.reporter = self.issue.reporter
+        print(form.instance.__dict__)
+        if form.changed_data:
+            if self.issue.description != form.cleaned_data['description']:
+                self.issue.changed(
+                    self.request.user,
+                    'description'
+                )
+            if self.issue.title != form.cleaned_data['title']:
+                self.issue.changed(
+                    self.request.user,
+                    'title'
+                )
+        return super().form_valid(form)
+    
+    def preview(self, form):
+        self.preview_data = form.instance.description
+        return super().preview(form)
 
     def get_object(self):
         return self.issue
@@ -229,9 +233,11 @@ class SearchResultView(ListView):
 
     def get_queryset(self):
         needle = self.kwargs['needle']
-        ias = IssueAction.objects.filter(text__icontains=needle)
+        ias = IssueComment.objects.filter(text__icontains=needle)
         pks = ias.values_list('issue', flat=True)
-        return Issue.objects.filter(Q(title__icontains=needle) | Q(id__in=pks))
+        return Issue.objects.filter(
+            (Q(title__icontains=needle) | Q(description__icontains=needle)) \
+            | Q(id__in=pks))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -10,7 +10,11 @@
     {% if can_edit_issue %}
     <a href="{% url 'issuetracker:issue_update' pk=object.pk %}"><span class="glyphicon glyphicon-pencil"></span></a>
     {% endif %}</h2>
-    {{ object.description|markdown_safe }}
+    <div class="panel panel-default">
+      <div class="panel-body">
+      {{ object.description|markdown_safe }}
+      </div>
+    </div>
     {% for action in object.actions %}
     {% include "issuetracker/issueaction.html" with action=action %}
     {% endfor %}

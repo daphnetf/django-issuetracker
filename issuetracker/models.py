@@ -2,8 +2,6 @@ from django.conf import settings
 from django.core.urlresolvers import reverse_lazy
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django_markdown.models import MarkdownField
-from django_markdown.utils import markdown as _markdown
 
 from itertools import chain
 
@@ -22,6 +20,11 @@ class Project(models.Model):
     def get_absolute_url(self):
         return reverse_lazy('issuetracker:project', kwargs={'pk': self.pk})
 
+    def can_edit(self, user):
+        if self.developers.filter(username=user.username).exists():
+            return True
+        return False
+
 
 class Tag(models.Model):
     name = models.CharField(
@@ -39,6 +42,11 @@ class Tag(models.Model):
 
     def get_absolute_url(self):
         return reverse_lazy('issuetracker:tag', kwargs={'pk': self.pk})
+
+    def can_edit(self, user):
+        if self.project.can_edit(user):
+            return True
+        return False
 
 
 class Issue(models.Model):
@@ -62,7 +70,7 @@ class Issue(models.Model):
         'issuetracker.Tag',
         blank=True,
     )
-    description = MarkdownField(
+    description = models.TextField(
     )
     project = models.ForeignKey(
         Project
@@ -72,7 +80,7 @@ class Issue(models.Model):
         attachements = IssueAttachement.objects.filter(issue=self)
         comments = IssueComment.objects.filter(issue=self)
         actions = IssueAction.objects.filter(issue=self).exclude(pk__in=attachements).exclude(pk__in=comments)
-        return list(chain(actions, comments, attachements))
+        return sorted(chain(actions, comments, attachements), key= lambda x: x.pk)
 
     def assigned(self):
         return self.assignee != None
@@ -128,7 +136,7 @@ class Issue(models.Model):
         ).save()
 
     def can_edit(self, user):
-        if self.project.developers.filter(username=user.username).exists():
+        if self.project.can_edit(user):
             return True
         if self.assignee == user:
             return True
@@ -169,9 +177,11 @@ class IssueAction(models.Model):
 
 class IssueComment(IssueAction):
 
-    text = MarkdownField()
+    text = models.TextField(
+    )
 
 
 class IssueAttachement(IssueAction):
 
-    file = models.FileField()
+    file = models.FileField(
+    )
