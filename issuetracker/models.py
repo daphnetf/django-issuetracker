@@ -45,9 +45,7 @@ class Tag(models.Model):
         return reverse_lazy('issuetracker:tag', kwargs={'pk': self.pk})
 
     def can_edit(self, user):
-        if self.project.can_edit(user):
-            return True
-        return False
+        return self.project.can_edit(user)
 
 
 class Issue(models.Model):
@@ -182,7 +180,6 @@ class IssueAction(models.Model):
         if not self.pk:
             self.created = now
         self.changed = now
-        print(self.__dict__)
         super().save(*args, **kwargs)
 
     def is_changed(self):

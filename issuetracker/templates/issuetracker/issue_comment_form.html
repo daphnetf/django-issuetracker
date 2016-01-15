@@ -1,0 +1,35 @@
+{% load django_markdown %}
+{% load issue_ttags %}
+
+{% block content %}
+{% can_edit issue request.user as can_edit_issue %}
+<form action="" method="post" class="form-horizontal">{% csrf_token %}
+  {% for field in form %}
+<div class="form-group{% if field.errors %} has-error{% endif %}">
+  <div class="col-sm-12">
+  {{ field }}
+  {% for error in field.errors %}
+  <span class="help-block ">{{ error }}</span>
+  {% endfor %}
+  {% if field.help_text %}
+  <p class="help-block">{{ field.help_text|safe }}</p>
+  {% endif %}
+  </div>
+</div>
+  {% endfor %}
+  <div class="form-group">
+    <div class="col-sm-12">
+      {% if can_edit_issue %}
+        {% if issue.closed %}
+        <button type="submit" name="open" class="btn btn-default">Open</button>
+        {% else %}
+        <button type="submit" name="close" class="btn btn-default">Close</button>
+        {% endif %}
+      {% endif %}
+      {% block form_buttons %}
+      <button type="submit" class="btn btn-primary">Submit</button>
+      {% endblock %}
+    </div>
+  </div>
+</form>
+{% endblock %}

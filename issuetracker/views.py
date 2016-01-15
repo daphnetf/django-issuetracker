@@ -1,5 +1,7 @@
 from django.core.urlresolvers import reverse_lazy
 from django.db.models import Q
+from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
 from django.views.generic import ListView, TemplateView, FormView, View
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
@@ -7,7 +9,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from issuetracker.forms import IssueCommentForm, SearchForm, \
     IssueModelForm, IssueMetaModelForm
 from issuetracker.mixins import LoginRequiredMixin, IssueViewMixin, \
-    ProjectViewMixin, PreviewFormMixin
+    ProjectViewMixin, PreviewFormMixin, TagViewMixin
 from issuetracker.models import Project, Issue, IssueAction, \
     IssueComment, IssueAttachement, Tag
 
@@ -75,6 +77,8 @@ class IssueUpdateView(LoginRequiredMixin, IssueViewMixin, PreviewFormMixin, Upda
 
     def form_valid(self, form):
         self.object = self.get_object()
+        if not self.object.can_edit(request.user):
+            return HttpResponseForbidden()
         form.instance.id = self.issue.id
         form.instance.project = self.issue.project
         form.instance.reporter = self.issue.reporter
@@ -106,9 +110,9 @@ class IssueMetaUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
     template_name_suffix = '_update_form'
 
     def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated():
-            return HttpResponseForbidden()
         self.object = self.get_object()
+        if not self.object.can_edit(request.user):
+            return HttpResponseForbidden()
         form = self.get_form()
         assignee = form.instance.assignee
         tags = form.instance.tags
@@ -158,6 +162,13 @@ class IssueDetailCommentView(SingleObjectMixin, PreviewFormMixin, IssueViewMixin
             return HttpResponseForbidden()
         self.object = self.get_object()
         form = self.get_form()
+        ignore_invalid_form = False
+        do_redirect = False
+        if self.issue.can_edit(request.user):
+            if 'open' in request.POST and self.issue.closed:
+                ignore_invalid_form = True
+            if 'close' in request.POST and not self.issue.closed:
+                ignore_invalid_form = True
         if form.is_valid():
             self.form_valid(form)
             IssueComment.objects.create(
@@ -167,8 +178,21 @@ class IssueDetailCommentView(SingleObjectMixin, PreviewFormMixin, IssueViewMixin
                 icon='comment',
                 text=form.cleaned_data["comment"]
             )
-        else:
+            do_redirect = True
+        elif not ignore_invalid_form:
             self.form_invalid(form)
+        if self.issue.can_edit(request.user):
+            if 'open' in request.POST and self.issue.closed:
+                self.issue.open(request.user)
+                self.issue.save()
+                form = self.form_class()
+                do_redirect = True
+            if 'close' in request.POST and not self.issue.closed:
+                self.issue.close(request.user)
+                self.issue.save()
+                do_redirect = True
+        if do_redirect:
+            return redirect(self.issue)
         return super().get(request, *args, **kwargs)
     
     def preview(self, form):
@@ -193,13 +217,41 @@ class IssueDetailView(View):
         return view(request, *args, **kwargs)
 
 
-class IssueCommentUpdateView(LoginRequiredMixin, IssueViewMixin, UpdateView):
+class IssueCommentUpdateView(LoginRequiredMixin, PreviewFormMixin, IssueViewMixin, UpdateView):
     model = IssueComment
     fields = ['text']
     template_name_suffix = '_update_form'
 
     def get_success_url(self):
         return reverse_lazy('issuetracker:issue', kwargs={'pk': self.issue.pk})
+
+
+class IssueOpenView(IssueViewMixin, DetailView):
+
+    model = Issue
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.issue.can_edit(request.user):
+            return HttpResponseForbidden()
+        super().dispatch(request, *args, **kwargs)
+        if self.issue.closed:
+            self.issue.open(request.user)
+            self.issue.save()
+        return redirect(self.issue)
+
+
+class IssueCloseView(IssueViewMixin, DetailView):
+
+    model = Issue
+
+    def dispatch(self, request, *args, **kwargs):
+        super().dispatch(request, *args, **kwargs)
+        if not self.issue.can_edit(request.user):
+            return HttpResponseForbidden()
+        if not self.issue.closed:
+            self.issue.close(request.user)
+            self.issue.save()
+        return redirect(self.issue)
 
 
 class TagListView(ProjectViewMixin, ListView):
@@ -216,14 +268,26 @@ class TagCreateView(LoginRequiredMixin, ProjectViewMixin, CreateView):
         form.instance.project = self.project
         return super().form_valid(form)
 
+    def dispatch(self, request, *args, **kwargs):
+        result = super().dispatch(request, *args, **kwargs)
+        if not self.project.can_edit(request.user):
+            return HttpResponseForbidden()
+        return result
 
-class TagUpdateView(LoginRequiredMixin, ProjectViewMixin, UpdateView):
+
+class TagUpdateView(LoginRequiredMixin, TagViewMixin, UpdateView):
 
     model = Tag
     fields = ['name', 'color']
 
+    def dispatch(self, request, *args, **kwargs):
+        result = super().dispatch(request, *args, **kwargs)
+        if not self.tag.can_edit(request.user):
+            return HttpResponseForbidden()
+        return result
 
-class TagDetailView(ProjectViewMixin, DetailView):
+
+class TagDetailView(TagViewMixin, DetailView):
 
     model = Tag
 
@@ -247,7 +311,6 @@ class SearchResultView(ListView):
         context = super().get_context_data(**kwargs)
         context['needle'] = self.kwargs['needle']
         return context
-
 
 
 class SearchView(FormView):

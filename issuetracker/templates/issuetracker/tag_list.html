@@ -6,7 +6,7 @@
     <a class="btn btn-success"class="btn btn-success" href="{% url 'issuetracker:new_tag' %}"><span class="glyphicon glyphicon-plus"></span> {% trans "Create new Tag" %}</a>
     </h2>
 {% if object_list %}
-    <ul>
+    <ul class="list-unstyled">
         {% for tag in object_list %}
         <li><a href="{{ tag.get_absolute_url }}">{% include "issuetracker/tag.html" with tag=tag %}</a></li>
         {% endfor %}
