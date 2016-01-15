@@ -1,0 +1,26 @@
+.issue-list span.glyphicon-question-sign ,
+.panel-opened > .panel-heading{
+	color: #7af;
+}
+
+.issue-list span.glyphicon-ok-sign,
+.panel-closed > .panel-heading {
+	color: #a00;
+}
+
+.label-closed, .label-open {
+	color: #fff !important;
+	padding-top: 0.5em;
+}
+
+.label-closed {
+	background-color: #a00;
+}
+
+.label-open {
+	background-color: #7af;
+}
+
+.issue-list dl {
+	margin-bottom: 0px;
+}
